@@ -1,8 +1,11 @@
+from concurrent.futures import ProcessPoolExecutor
 from os.path import abspath, dirname, join
 from threading import Lock
 from typing import Any
 
 from transformers import GPT2Tokenizer as TransformerGPT2Tokenizer
+
+_executor = ProcessPoolExecutor(max_workers=1)
 
 _tokenizer = None
 _lock = Lock()
@@ -20,7 +23,8 @@ class GPT2Tokenizer:
 
     @staticmethod
     def get_num_tokens(text: str) -> int:
-        return GPT2Tokenizer._get_num_tokens_by_gpt2(text)
+        future = _executor.submit(GPT2Tokenizer._get_num_tokens_by_gpt2, text)
+        return future.result()
 
     @staticmethod
     def get_encoder() -> Any:
