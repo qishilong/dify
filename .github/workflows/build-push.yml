@@ -5,6 +5,7 @@ on:
     branches:
       - "main"
       - "deploy/dev"
+      - "test/implement-asynchronous-token-counting-in-GPT2Tokenizer"
   release:
     types: [published]
 
