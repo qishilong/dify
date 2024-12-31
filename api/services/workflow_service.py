@@ -2,7 +2,7 @@ import json
 import time
 from collections.abc import Sequence
 from datetime import UTC, datetime
-from typing import Any, Optional, cast
+from typing import Optional, cast
 from uuid import uuid4
 
 from core.app.apps.advanced_chat.app_config_manager import AdvancedChatAppConfigManager
