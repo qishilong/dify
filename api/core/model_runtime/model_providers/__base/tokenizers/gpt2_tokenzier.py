@@ -22,9 +22,6 @@ class GPT2Tokenizer:
 
     @staticmethod
     def get_num_tokens(text: str) -> int:
-        future = _pool.spawn(GPT2Tokenizer._get_num_tokens_by_gpt2, text * 1000)
-        result = future.get(block=True)
-
         future = _pool.spawn(GPT2Tokenizer._get_num_tokens_by_gpt2, text)
         result = future.get(block=True)
         return cast(int, result)
