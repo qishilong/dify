@@ -272,7 +272,7 @@ class WorkflowCycleManage:
         self, *, session: Session, workflow_run: WorkflowRun, event: QueueNodeStartedEvent
     ) -> WorkflowNodeExecution:
         workflow_node_execution = WorkflowNodeExecution()
-        workflow_node_execution.id = event.node_execution_id
+        workflow_node_execution.id = str(uuid4())
         workflow_node_execution.tenant_id = workflow_run.tenant_id
         workflow_node_execution.app_id = workflow_run.app_id
         workflow_node_execution.workflow_id = workflow_run.workflow_id
@@ -389,7 +389,7 @@ class WorkflowCycleManage:
         execution_metadata = json.dumps(merged_metadata)
 
         workflow_node_execution = WorkflowNodeExecution()
-        workflow_node_execution.id = event.node_execution_id
+        workflow_node_execution.id = str(uuid4())
         workflow_node_execution.tenant_id = workflow_run.tenant_id
         workflow_node_execution.app_id = workflow_run.app_id
         workflow_node_execution.workflow_id = workflow_run.workflow_id
@@ -820,7 +820,7 @@ class WorkflowCycleManage:
         return workflow_run
 
     def _get_workflow_node_execution(self, session: Session, node_execution_id: str) -> WorkflowNodeExecution:
-        stmt = select(WorkflowNodeExecution).where(WorkflowNodeExecution.id == node_execution_id)
+        stmt = select(WorkflowNodeExecution).where(WorkflowNodeExecution.node_execution_id == node_execution_id)
         workflow_node_execution = session.scalar(stmt)
         if not workflow_node_execution:
             raise Exception(f"Workflow node execution not found: {node_execution_id}")
