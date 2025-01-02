@@ -10,10 +10,17 @@ import { useStoreApi } from 'reactflow'
 import { useWorkflowStore } from '../store'
 import type { Node } from '../types'
 
+/**
+ * flow匡选区域交互
+ * @returns
+ */
 export const useSelectionInteractions = () => {
   const store = useStoreApi()
   const workflowStore = useWorkflowStore()
 
+  /**
+   * 处理匡选区域开始
+   */
   const handleSelectionStart = useCallback(() => {
     const {
       getNodes,
@@ -42,6 +49,9 @@ export const useSelectionInteractions = () => {
     }
   }, [store])
 
+  /**
+   * 处理匡选区域变化
+   */
   const handleSelectionChange = useCallback<OnSelectionChangeFunc>(({ nodes: nodesInSelection, edges: edgesInSelection }) => {
     const {
       getNodes,
@@ -80,6 +90,9 @@ export const useSelectionInteractions = () => {
     setEdges(newEdges)
   }, [store])
 
+  /**
+   * 处理匡选区域拖动
+   */
   const handleSelectionDrag = useCallback((_: MouseEvent, nodesWithDrag: Node[]) => {
     const {
       getNodes,
@@ -101,6 +114,9 @@ export const useSelectionInteractions = () => {
     setNodes(newNodes)
   }, [store, workflowStore])
 
+  /**
+   * 处理取消匡选
+   */
   const handleSelectionCancel = useCallback(() => {
     const {
       getNodes,

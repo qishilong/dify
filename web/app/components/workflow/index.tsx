@@ -296,6 +296,7 @@ const Workflow: FC<WorkflowProps> = memo(({
       }
       <PanelContextmenu />
       <NodeContextmenu />
+      {/* 节点之间水平垂直辅助线 */}
       <HelpLine />
       {
         !!showConfirm && (
@@ -409,6 +410,9 @@ const WorkflowWrap = memo(() => {
   }
 
   const features = data.features || {}
+  /**
+   * 功能项配置数据
+   */
   const initialFeatures: FeaturesData = {
     file: {
       image: {

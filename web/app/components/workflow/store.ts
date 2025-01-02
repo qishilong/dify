@@ -223,7 +223,7 @@ export const createWorkflowStore = () => {
     setIsRestoring: isRestoring => set(() => ({ isRestoring })),
     debouncedSyncWorkflowDraft: debounce((syncWorkflowDraft) => {
       syncWorkflowDraft()
-    }, 5000),
+    }, 5000), // 5秒异步保存工作流数据，发起保存的函数是通过外部传过来的
     buildInTools: [],
     setBuildInTools: buildInTools => set(() => ({ buildInTools })),
     customTools: [],

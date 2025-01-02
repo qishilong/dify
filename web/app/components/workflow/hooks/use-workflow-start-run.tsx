@@ -13,6 +13,13 @@ import {
 } from './index'
 import { useFeaturesStore } from '@/app/components/base/features/hooks'
 
+/**
+ * 与flow开始运行有关
+ * @returns {Object} 返回与flow开始运行有关的函数
+ * @returns {Function} handleWorkflowStartRunInWorkflow - 在workflow中开始运行
+ * @returns {Function} handleWorkflowStartRunInChatflow - 在chatflow中开始运行
+ * @returns {Function} handleWorkflowStartRun - 统一处理flow开始运行
+ */
 export const useWorkflowStartRun = () => {
   const store = useStoreApi()
   const workflowStore = useWorkflowStore()
@@ -22,6 +29,9 @@ export const useWorkflowStartRun = () => {
   const { handleRun } = useWorkflowRun()
   const { doSyncWorkflowDraft } = useNodesSyncDraft()
 
+  /**
+   * 处理在workflow中开始运行
+   */
   const handleWorkflowStartRunInWorkflow = useCallback(async () => {
     const {
       workflowRunningData,
@@ -61,6 +71,9 @@ export const useWorkflowStartRun = () => {
     }
   }, [store, workflowStore, featuresStore, handleCancelDebugAndPreviewPanel, handleRun, doSyncWorkflowDraft])
 
+  /**
+   * 处理在chatflow中开始运行
+   */
   const handleWorkflowStartRunInChatflow = useCallback(async () => {
     const {
       showDebugAndPreviewPanel,
@@ -81,6 +94,9 @@ export const useWorkflowStartRun = () => {
     setHistoryWorkflowData(undefined)
   }, [workflowStore, handleCancelDebugAndPreviewPanel])
 
+  /**
+   * 统一处理flow开始运行
+   */
   const handleStartWorkflowRun = useCallback(() => {
     if (!isChatMode)
       handleWorkflowStartRunInWorkflow()

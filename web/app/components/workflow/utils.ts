@@ -96,6 +96,11 @@ const getCycleEdges = (nodes: Node[], edges: Edge[]) => {
   return cycleEdges
 }
 
+/**
+ * 生成并获取迭代节点的开始节点
+ * @param iterationId
+ * @returns
+ */
 export function getIterationStartNode(iterationId: string): Node {
   return generateNewNode({
     id: `${iterationId}start`,
@@ -117,6 +122,11 @@ export function getIterationStartNode(iterationId: string): Node {
   }).newNode
 }
 
+/**
+ * 生成一个新节点
+ * @param param0
+ * @returns
+ */
 export function generateNewNode({ data, position, id, zIndex, type, ...rest }: Omit<Node, 'id'> & { id?: string }): {
   newNode: Node
   newIterationStartNode?: Node
@@ -147,6 +157,13 @@ export function generateNewNode({ data, position, id, zIndex, type, ...rest }: O
   }
 }
 
+/**
+ * 预处理节点和边
+ * 主要针对存在迭代节点的情况，如果不存在迭代节点则直接返回
+ * @param nodes
+ * @param edges
+ * @returns
+ */
 export const preprocessNodesAndEdges = (nodes: Node[], edges: Edge[]) => {
   const hasIterationNode = nodes.some(node => node.data.type === BlockEnum.Iteration)
 
@@ -160,18 +177,20 @@ export const preprocessNodesAndEdges = (nodes: Node[], edges: Edge[]) => {
     prev[next.id] = next
     return prev
   }, {} as Record<string, Node>)
-  const iterationNodesWithStartNode = []
-  const iterationNodesWithoutStartNode = []
+  const iterationNodesWithStartNode = [] // 迭代节点中有开始节点的
+  const iterationNodesWithoutStartNode = [] // 迭代节点中没有开始节点的
 
   for (let i = 0; i < nodes.length; i++) {
     const currentNode = nodes[i] as Node<IterationNodeType>
 
     if (currentNode.data.type === BlockEnum.Iteration) {
       if (currentNode.data.start_node_id) {
+        // 获得迭代节点中的所有节点，包括开始节点
         if (nodesMap[currentNode.data.start_node_id]?.type !== CUSTOM_ITERATION_START_NODE)
           iterationNodesWithStartNode.push(currentNode)
       }
       else {
+        // 获得迭代节点中的所有节点，不包括开始节点
         iterationNodesWithoutStartNode.push(currentNode)
       }
     }
@@ -183,6 +202,7 @@ export const preprocessNodesAndEdges = (nodes: Node[], edges: Edge[]) => {
     newIterationStartNodesMap[iterationNode.id] = newNode
     return newNode
   })
+  // 创建一条新边，将迭代节点的开始节点将新生成的节点连接，并且将新生成的节点视为开始节点
   const newEdges = iterationNodesWithStartNode.map((iterationNode) => {
     const newNode = newIterationStartNodesMap[iterationNode.id]
     const startNode = nodesMap[iterationNode.data.start_node_id]
@@ -207,6 +227,7 @@ export const preprocessNodesAndEdges = (nodes: Node[], edges: Edge[]) => {
       zIndex: ITERATION_CHILDREN_Z_INDEX,
     }
   })
+  // 遍历并且重新复制迭代节点的start_node_id
   nodes.forEach((node) => {
     if (node.data.type === BlockEnum.Iteration && newIterationStartNodesMap[node.id])
       (node.data as IterationNodeType).start_node_id = newIterationStartNodesMap[node.id].id
@@ -342,6 +363,12 @@ export const initialEdges = (originEdges: Edge[], originNodes: Node[]) => {
   })
 }
 
+/**
+ * 利用dagre布局算法获取flow布局
+ * @param originNodes
+ * @param originEdges
+ * @returns
+ */
 export const getLayoutByDagre = (originNodes: Node[], originEdges: Edge[]) => {
   const dagreGraph = new dagre.graphlib.Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -372,6 +399,11 @@ export const getLayoutByDagre = (originNodes: Node[], originEdges: Edge[]) => {
   return dagreGraph
 }
 
+/**
+ * 能够单独运行的节点
+ * @param nodeType
+ * @returns
+ */
 export const canRunBySingle = (nodeType: BlockEnum) => {
   return nodeType === BlockEnum.LLM
     || nodeType === BlockEnum.KnowledgeRetrieval
@@ -388,6 +420,12 @@ type ConnectedSourceOrTargetNodesChange = {
   type: string
   edge: Edge
 }[]
+/**
+ * 获取节点连接的源节点或目标节点的ID集合
+ * @param changes
+ * @param nodes
+ * @returns
+ */
 export const getNodesConnectedSourceOrTargetHandleIdsMap = (changes: ConnectedSourceOrTargetNodesChange, nodes: Node[]) => {
   const nodesConnectedSourceOrTargetHandleIdsMap = {} as Record<string, any>
 
@@ -450,6 +488,12 @@ export const genNewNodeTitleFromOld = (oldTitle: string) => {
   }
 }
 
+/**
+ * 获取工作流所有的节点和每个分支节点深度
+ * @param nodes
+ * @param edges
+ * @returns
+ */
 export const getValidTreeNodes = (nodes: Node[], edges: Edge[]) => {
   const startNode = nodes.find(node => node.data.type === BlockEnum.Start)
 
@@ -509,6 +553,7 @@ export const getToolCheckParams = (
   const toolSettingSchema = formSchemas.filter((item: any) => item.form !== 'llm')
 
   return {
+    // 输入Schema
     toolInputsSchema: (() => {
       const formInputs: InputVar[] = []
       toolInputVarSchema.forEach((item: any) => {
@@ -521,6 +566,7 @@ export const getToolCheckParams = (
       })
       return formInputs
     })(),
+    // 是否有权限
     notAuthed: isBuiltIn && !!currCollection?.allow_delete && !currCollection?.is_team_authorization,
     toolSettingSchema,
     language,
@@ -631,6 +677,14 @@ type NodeStreamInfo = {
   upstreamNodes: Set<string>
   downstreamEdges: Set<string>
 }
+
+/**
+ * 获取工作流并行信息，包括连接边是否正常、并行深度、并行嵌套等信息
+ * @param nodes
+ * @param edges
+ * @param parentNodeId
+ * @returns
+ */
 export const getParallelInfo = (nodes: Node[], edges: Edge[], parentNodeId?: string) => {
   let startNode
 
@@ -649,9 +703,12 @@ export const getParallelInfo = (nodes: Node[], edges: Edge[], parentNodeId?: str
 
   const parallelList = [] as ParallelInfoItem[]
   const nextNodeHandles = [{ node: startNode, handle: 'source' }]
-  let hasAbnormalEdges = false
+  let hasAbnormalEdges = false // 是否有异常边
 
   const traverse = (firstNodeHandle: NodeHandle) => {
+    /**
+     * 利用Set记录从开始节点到当前节点的所有边（key: 节点ID，value: 路径ID（1735031820954(开始)-source-1735297167226(LLM7)-target））
+     */
     const nodeEdgesSet = {} as Record<string, Set<string>>
     const totalEdgesSet = new Set<string>()
     const nextHandles = [firstNodeHandle]
@@ -659,36 +716,62 @@ export const getParallelInfo = (nodes: Node[], edges: Edge[], parentNodeId?: str
     const parallelListItem = {
       parallelNodeId: '',
       depth: 0,
-    } as ParallelInfoItem
-    const nodeParallelInfoMap = {} as Record<string, NodeParallelInfo>
+    } as ParallelInfoItem // 某一个并行节点信息
+    const nodeParallelInfoMap = {} as Record<string, NodeParallelInfo> // 并行节点信息map
     nodeParallelInfoMap[firstNodeHandle.node.id] = {
       parallelNodeId: '',
       edgeHandleId: '',
-      depth: 0,
+      depth: 0, // 当前节点的深度（层级）
     }
 
     while (nextHandles.length) {
+      /**
+       * currentNodeHandle 当前的节点
+       * outgoers 获取当前节点连出的所有边的所有目标节点
+       * depth 当前节点的深度（层级）
+       */
       const currentNodeHandle = nextHandles.shift()!
       const { node: currentNode, handle: currentHandle = 'source' } = currentNodeHandle
       const currentNodeHandleKey = currentNode.id
+      /**
+       * 第一次是获取所有开始节点连出的边，后续是获取当前节点连出的边
+       */
       const connectedEdges = edges.filter(edge => edge.source === currentNode.id && edge.sourceHandle === currentHandle)
+      /**
+       * 第一次是获取所有开始节点连出的边的长度，后续是获取当前节点连出的边的长度
+       */
       const connectedEdgesLength = connectedEdges.length
+      /**
+       * 获取当前节点连出的所有边的所有目标节点
+       */
       const outgoers = nodes.filter(node => connectedEdges.some(edge => edge.target === node.id))
+      /**
+       * 获取当前节点的所有直接上游节点
+       */
       const incomers = getIncomers(currentNode, nodes, edges)
 
       if (!streamInfo[currentNodeHandleKey]) {
         streamInfo[currentNodeHandleKey] = {
-          upstreamNodes: new Set<string>(),
-          downstreamEdges: new Set<string>(),
+          upstreamNodes: new Set<string>(), // 上游节点
+          downstreamEdges: new Set<string>(), // 下游边
         }
       }
 
       if (nodeEdgesSet[currentNodeHandleKey]?.size > 0 && incomers.length > 1) {
+        /**
+         * 记录整个工作流从开始节点到当前节点总共有多少并行分支
+         * key: index
+         * value: 1735031820954(开始)-source-1735297151678(LLM)-target
+         */
         const newSet = new Set<string>()
         for (const item of totalEdgesSet) {
+          // 如果当前节点的下游边没有这个边，则将这个边加入到newSet中
           if (!streamInfo[currentNodeHandleKey].downstreamEdges.has(item))
             newSet.add(item)
         }
+        /**
+         * 如果经过当前节点的所有边和newSet相等，则将当前节点添加nextNodeHandles，从当前节点开始再进行判断
+         */
         if (isEqual(nodeEdgesSet[currentNodeHandleKey], newSet)) {
           parallelListItem.depth = nodeParallelInfoMap[currentNode.id].depth
           nextNodeHandles.push({ node: currentNode, handle: currentHandle })
@@ -696,20 +779,23 @@ export const getParallelInfo = (nodes: Node[], edges: Edge[], parentNodeId?: str
         }
       }
 
+      // 更新并行节点列表的深度
       if (nodeParallelInfoMap[currentNode.id].depth > parallelListItem.depth)
         parallelListItem.depth = nodeParallelInfoMap[currentNode.id].depth
 
       outgoers.forEach((outgoer) => {
-        const outgoerConnectedEdges = getConnectedEdges([outgoer], edges).filter(edge => edge.source === outgoer.id)
+        const outgoerConnectedEdges = getConnectedEdges([outgoer], edges).filter(edge => edge.source === outgoer.id) // 获取当前节点的所有直接下游边，即是从这个节点引出的边
         const sourceEdgesGroup = groupBy(outgoerConnectedEdges, 'sourceHandle')
         const incomers = getIncomers(outgoer, nodes, edges)
 
+        // 如果当前节点有多个上游节点和下游节点，则认为是异常边
         if (outgoers.length > 1 && incomers.length > 1)
           hasAbnormalEdges = true
 
         Object.keys(sourceEdgesGroup).forEach((sourceHandle) => {
           nextHandles.push({ node: outgoer, handle: sourceHandle })
         })
+        // 如果当前节点没有下游边，则初始化handle为source保存到nextHandles中
         if (!outgoerConnectedEdges.length)
           nextHandles.push({ node: outgoer, handle: 'source' })
 

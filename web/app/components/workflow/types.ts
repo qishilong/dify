@@ -15,6 +15,9 @@ import type {
 } from '@/app/components/workflow/nodes/_base/components/error-handle/types'
 import type { WorkflowRetryConfig } from '@/app/components/workflow/nodes/_base/components/retry/types'
 
+/**
+ * 节点类型
+ */
 export enum BlockEnum {
   Start = 'start',
   End = 'end',
@@ -28,6 +31,9 @@ export enum BlockEnum {
   HttpRequest = 'http-request',
   VariableAssigner = 'variable-assigner',
   VariableAggregator = 'variable-aggregator',
+  /**
+   * 工具（内置工具、自定义工具、工作流工具）
+   */
   Tool = 'tool',
   ParameterExtractor = 'parameter-extractor',
   Iteration = 'iteration',
@@ -37,6 +43,11 @@ export enum BlockEnum {
   Assigner = 'assigner', // is now named as VariableAssigner
 }
 
+/**
+ * 两种flow交互模式
+ * pointer: 鼠标指针交互
+ * hand: 拖拽flow交互
+ */
 export enum ControlMode {
   Pointer = 'pointer',
   Hand = 'hand',
@@ -112,7 +123,9 @@ export type WorkflowDataUpdater = {
   viewport: Viewport
 }
 
-export type ValueSelector = string[] // [nodeId, key | obj key path]
+// [nodeId, key | obj key path]
+// [节点ID, 键 | 对象键路径]
+export type ValueSelector = string[]
 
 export type Variable = {
   variable: string

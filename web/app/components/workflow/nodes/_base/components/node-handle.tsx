@@ -36,6 +36,9 @@ type NodeHandleProps = {
   showExceptionStatus?: boolean
 } & Pick<Node, 'id' | 'data'>
 
+/**
+ * 节点目标端口，即节点左侧连线进入的端口
+ */
 export const NodeTargetHandle = memo(({
   id,
   data,
@@ -116,6 +119,9 @@ export const NodeTargetHandle = memo(({
 })
 NodeTargetHandle.displayName = 'NodeTargetHandle'
 
+/**
+ * 节点源端口，即节点右侧连线出去的端口
+ */
 export const NodeSourceHandle = memo(({
   id,
   data,

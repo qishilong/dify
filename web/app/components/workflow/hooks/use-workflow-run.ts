@@ -27,6 +27,15 @@ import {
 import { ErrorHandleTypeEnum } from '@/app/components/workflow/nodes/_base/components/error-handle/types'
 import type { NodeTracing, VersionHistory } from '@/types/workflow'
 
+/**
+ * 与flow运行有关
+ * @returns {Object} 返回与flow运行有关的方法
+ * @returns {Function} handleBackupDraft 处理备份草稿
+ * @returns {Function} handleLoadBackupDraft 处理加载备份草稿
+ * @returns {Function} handleRun 运行工作流
+ * @returns {Function} handleStopRun 停止运行
+ * @returns {Function} handleRestoreFromPublishedWorkflow 处理从已发布的工作流数据恢复
+ */
 export const useWorkflowRun = () => {
   const store = useStoreApi()
   const workflowStore = useWorkflowStore()
@@ -36,6 +45,9 @@ export const useWorkflowRun = () => {
   const { handleUpdateWorkflowCanvas } = useWorkflowUpdate()
   const pathname = usePathname()
 
+  /**
+   * 处理备份草稿
+   */
   const handleBackupDraft = useCallback(() => {
     const {
       getNodes,
@@ -61,6 +73,9 @@ export const useWorkflowRun = () => {
     }
   }, [reactflow, workflowStore, store, featuresStore, doSyncWorkflowDraft])
 
+  /**
+   * 处理加载备份草稿
+   */
   const handleLoadBackupDraft = useCallback(() => {
     const {
       backupDraft,
@@ -87,6 +102,9 @@ export const useWorkflowRun = () => {
     }
   }, [handleUpdateWorkflowCanvas, workflowStore, featuresStore])
 
+  /**
+   * 运行工作流
+   */
   const handleRun = useCallback(async (
     params: any,
     callback?: IOtherOptions,
@@ -745,12 +763,18 @@ export const useWorkflowRun = () => {
     )
   }, [store, reactflow, workflowStore, doSyncWorkflowDraft])
 
+  /**
+   * 停止运行
+   */
   const handleStopRun = useCallback((taskId: string) => {
     const appId = useAppStore.getState().appDetail?.id
 
     stopWorkflowRun(`/apps/${appId}/workflow-runs/tasks/${taskId}/stop`)
   }, [])
 
+  /**
+   * 处理从已发布的工作流数据恢复
+   */
   const handleRestoreFromPublishedWorkflow = useCallback((publishedWorkflow: VersionHistory) => {
     const nodes = publishedWorkflow.graph.nodes.map(node => ({ ...node, selected: false, data: { ...node.data, selected: false } }))
     const edges = publishedWorkflow.graph.edges

@@ -23,6 +23,12 @@ const layoutOptions = {
 
 const elk = new ELK()
 
+/**
+ * 获取flow布局内的所有节点
+ * @param nodes
+ * @param edges
+ * @returns
+ */
 export const getLayoutedNodes = async (nodes: Node[], edges: Edge[]) => {
   const graph = {
     id: 'root',
@@ -59,6 +65,10 @@ export const getLayoutedNodes = async (nodes: Node[], edges: Edge[]) => {
   }
 }
 
+/**
+ * 重置flow节点布局，重置flow节点
+ * @returns
+ */
 export const useNodesLayout = () => {
   const store = useStoreApi()
   const reactflow = useReactFlow()

@@ -24,6 +24,9 @@ export const useNodesSyncDraft = () => {
   const debouncedSyncWorkflowDraft = useStore(s => s.debouncedSyncWorkflowDraft)
   const params = useParams()
 
+  /**
+   * 获取发送post-draft请求的参数
+   */
   const getPostParams = useCallback(() => {
     const {
       getNodes,
@@ -42,10 +45,12 @@ export const useNodesSyncDraft = () => {
       const nodes = getNodes()
       const hasStartNode = nodes.find(node => node.data.type === BlockEnum.Start)
 
+      // 没有开始节点，不保存
       if (!hasStartNode)
         return
 
       const features = featuresStore!.getState().features
+      // 删除掉多余的数据，_ 开头的数据
       const producedNodes = produce(nodes, (draft) => {
         draft.forEach((node) => {
           Object.keys(node.data).forEach((key) => {
@@ -54,6 +59,7 @@ export const useNodesSyncDraft = () => {
           })
         })
       })
+      // 删除掉多余的数据，_ 开头的数据
       const producedEdges = produce(edges, (draft) => {
         draft.forEach((edge) => {
           Object.keys(edge.data).forEach((key) => {
@@ -105,15 +111,20 @@ export const useNodesSyncDraft = () => {
     }
   }, [getPostParams, params.appId, getNodesReadOnly])
 
+  /**
+   * 异步保存工作流草稿
+   * @param notRefreshWhenSyncError 保存出现错误情况下是否不刷新工作流草稿
+   */
   const doSyncWorkflowDraft = useCallback(async (notRefreshWhenSyncError?: boolean) => {
     if (getNodesReadOnly())
       return
+    // 获取发送post-draft请求的参数
     const postParams = getPostParams()
 
     if (postParams) {
       const {
-        setSyncWorkflowDraftHash,
-        setDraftUpdatedAt,
+        setSyncWorkflowDraftHash, // 设置同步工作流草稿的hash
+        setDraftUpdatedAt, // 设置工作流草稿更新时间
       } = workflowStore.getState()
       try {
         const res = await syncWorkflowDraft(postParams)
@@ -131,6 +142,11 @@ export const useNodesSyncDraft = () => {
     }
   }, [workflowStore, getPostParams, getNodesReadOnly, handleRefreshWorkflowDraft])
 
+  /**
+   * 触发工作流数据保存
+   * @param sync 是否立即保存，否则利用 debounce 5秒之后保存
+   * @param notRefreshWhenSyncError 保存出现错误情况下是否不刷新工作流草稿
+   */
   const handleSyncWorkflowDraft = useCallback((sync?: boolean, notRefreshWhenSyncError?: boolean) => {
     if (getNodesReadOnly())
       return

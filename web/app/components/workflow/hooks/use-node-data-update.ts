@@ -14,6 +14,9 @@ export const useNodeDataUpdate = () => {
   const { handleSyncWorkflowDraft } = useNodesSyncDraft()
   const { getNodesReadOnly } = useNodesReadOnly()
 
+  /**
+   * 更新节点数据，只更新节点数据
+   */
   const handleNodeDataUpdate = useCallback(({ id, data }: NodeDataUpdatePayload) => {
     const {
       getNodes,
@@ -28,6 +31,9 @@ export const useNodeDataUpdate = () => {
     setNodes(newNodes)
   }, [store])
 
+  /**
+   * 更新节点数据，并同时更新工作流草稿（立即更新）
+   */
   const handleNodeDataUpdateWithSyncDraft = useCallback((payload: NodeDataUpdatePayload) => {
     if (getNodesReadOnly())
       return

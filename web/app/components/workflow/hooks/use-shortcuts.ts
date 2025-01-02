@@ -16,6 +16,9 @@ import {
   useWorkflowStartRun,
 } from '.'
 
+/**
+ * flow快捷键
+ */
 export const useShortcuts = (): void => {
   const {
     handleNodesCopy,

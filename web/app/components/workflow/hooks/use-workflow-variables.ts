@@ -9,11 +9,20 @@ import type {
   Var,
 } from '@/app/components/workflow/types'
 
+/**
+ * 与flow变量有关
+ * @returns {Object} 返回与flow变量有关的函数
+ * @returns {Function} getNodeAvailableVars - 获取节点可用变量
+ * @returns {Function} getCurrentVariableType - 获取当前变量类型
+ */
 export const useWorkflowVariables = () => {
   const { t } = useTranslation()
   const environmentVariables = useStore(s => s.environmentVariables)
   const conversationVariables = useStore(s => s.conversationVariables)
 
+  /**
+   * 获取节点可用变量
+   */
   const getNodeAvailableVars = useCallback(({
     parentNode,
     beforeNodes,
@@ -40,6 +49,9 @@ export const useWorkflowVariables = () => {
     })
   }, [conversationVariables, environmentVariables, t])
 
+  /**
+   * 获取当前变量类型
+   */
   const getCurrentVariableType = useCallback(({
     parentNode,
     valueSelector,

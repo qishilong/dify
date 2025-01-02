@@ -55,6 +55,10 @@ import {
 } from './use-workflow'
 import { WorkflowHistoryEvent, useWorkflowHistory } from './use-workflow-history'
 
+/**
+ *
+ * Interactions 互动，交流；相互影响，相互作用
+ */
 export const useNodesInteractions = () => {
   const { t } = useTranslation()
   const store = useStoreApi()
@@ -77,6 +81,9 @@ export const useNodesInteractions = () => {
 
   const { saveStateToHistory, undo, redo } = useWorkflowHistory()
 
+  /**
+   * 节点拖拽开始
+   */
   const handleNodeDragStart = useCallback<NodeDragHandler>((_, node) => {
     workflowStore.setState({ nodeAnimation: false })
 
@@ -89,6 +96,9 @@ export const useNodesInteractions = () => {
     dragNodeStartPosition.current = { x: node.position.x, y: node.position.y }
   }, [workflowStore, getNodesReadOnly])
 
+  /**
+   * 节点拖拽
+   */
   const handleNodeDrag = useCallback<NodeDragHandler>((e, node: Node) => {
     if (getNodesReadOnly())
       return
@@ -134,6 +144,9 @@ export const useNodesInteractions = () => {
     setNodes(newNodes)
   }, [store, getNodesReadOnly, handleSetHelpline, handleNodeIterationChildDrag])
 
+  /**
+   * 节点拖拽停止
+   */
   const handleNodeDragStop = useCallback<NodeDragHandler>((_, node) => {
     const {
       setHelpLineHorizontal,
@@ -156,6 +169,9 @@ export const useNodesInteractions = () => {
     }
   }, [workflowStore, getNodesReadOnly, saveStateToHistory, handleSyncWorkflowDraft])
 
+  /**
+   * 处理进入节点的情况（节点的变化，和节点相关的边的变化）
+   */
   const handleNodeEnter = useCallback<NodeMouseHandler>((_, node) => {
     if (getNodesReadOnly())
       return
@@ -230,6 +246,9 @@ export const useNodesInteractions = () => {
     }
   }, [store, workflowStore, getNodesReadOnly])
 
+  /**
+   * 处理离开节点的情况（节点的变化，和节点相关的边的变化）
+   */
   const handleNodeLeave = useCallback<NodeMouseHandler>((_, node) => {
     if (getNodesReadOnly())
       return
@@ -262,6 +281,9 @@ export const useNodesInteractions = () => {
     setEdges(newEdges)
   }, [store, workflowStore, getNodesReadOnly])
 
+  /**
+   * 处理选中节点的情况（节点的变化，和节点相关的边的变化）
+   */
   const handleNodeSelect = useCallback((nodeId: string, cancelSelection?: boolean) => {
     const {
       getNodes,
@@ -276,6 +298,7 @@ export const useNodesInteractions = () => {
     if (!cancelSelection && selectedNode?.id === nodeId)
       return
 
+    // 处理节点是否选中
     const newNodes = produce(nodes, (draft) => {
       draft.forEach((node) => {
         if (node.id === nodeId)
@@ -287,6 +310,8 @@ export const useNodesInteractions = () => {
     setNodes(newNodes)
 
     const connectedEdges = getConnectedEdges([{ id: nodeId } as Node], edges).map(edge => edge.id)
+
+    // 处理边是否选中
     const newEdges = produce(edges, (draft) => {
       draft.forEach((edge) => {
         if (connectedEdges.includes(edge.id)) {
@@ -305,15 +330,22 @@ export const useNodesInteractions = () => {
     })
     setEdges(newEdges)
 
+    // 异步更新flow数据
     handleSyncWorkflowDraft()
   }, [store, handleSyncWorkflowDraft])
 
+  /**
+   * 处理节点被点击
+   */
   const handleNodeClick = useCallback<NodeMouseHandler>((_, node) => {
     if (node.type === CUSTOM_ITERATION_START_NODE)
       return
     handleNodeSelect(node.id)
   }, [handleNodeSelect])
 
+  /**
+   * 处理节点连接
+   */
   const handleNodeConnect = useCallback<OnConnect>(({
     source,
     sourceHandle,
@@ -396,6 +428,9 @@ export const useNodesInteractions = () => {
     }
   }, [getNodesReadOnly, store, workflowStore, handleSyncWorkflowDraft, saveStateToHistory, checkNestedParallelLimit])
 
+  /**
+   * 处理节点开始连接
+   */
   const handleNodeConnectStart = useCallback<OnConnectStart>((_, { nodeId, handleType, handleId }) => {
     if (getNodesReadOnly())
       return
@@ -422,6 +457,9 @@ export const useNodesInteractions = () => {
     }
   }, [store, workflowStore, getNodesReadOnly])
 
+  /**
+   * 处理节点连接结束
+   */
   const handleNodeConnectEnd = useCallback<OnConnectEnd>((e: any) => {
     if (getNodesReadOnly())
       return
@@ -496,6 +534,9 @@ export const useNodesInteractions = () => {
     setEnteringNodePayload(undefined)
   }, [store, handleNodeConnect, getNodesReadOnly, workflowStore, reactflow])
 
+  /**
+   * 处理节点删除
+   */
   const handleNodeDelete = useCallback((nodeId: string) => {
     if (getNodesReadOnly())
       return
@@ -584,6 +625,9 @@ export const useNodesInteractions = () => {
       saveStateToHistory(WorkflowHistoryEvent.NodeDelete)
   }, [getNodesReadOnly, store, handleSyncWorkflowDraft, saveStateToHistory, workflowStore, t])
 
+  /**
+   * 处理添加节点
+   */
   const handleNodeAdd = useCallback<OnNodeAdd>((
     {
       nodeType,
@@ -947,6 +991,9 @@ export const useNodesInteractions = () => {
     saveStateToHistory(WorkflowHistoryEvent.NodeAdd)
   }, [getNodesReadOnly, store, t, handleSyncWorkflowDraft, saveStateToHistory, workflowStore, getAfterNodesInSameBranch, checkNestedParallelLimit])
 
+  /**
+   * 处理节点变化（有点和节点删除，边的变化有关）
+   */
   const handleNodeChange = useCallback((
     currentNodeId: string,
     nodeType: BlockEnum,
@@ -1023,6 +1070,9 @@ export const useNodesInteractions = () => {
     saveStateToHistory(WorkflowHistoryEvent.NodeChange)
   }, [getNodesReadOnly, store, t, handleSyncWorkflowDraft, saveStateToHistory])
 
+  /**
+   * 处理节点取消运行的状态
+   */
   const handleNodeCancelRunningStatus = useCallback(() => {
     const {
       getNodes,
@@ -1039,6 +1089,9 @@ export const useNodesInteractions = () => {
     setNodes(newNodes)
   }, [store])
 
+  /**
+   * 处理节点取消选中
+   */
   const handleNodesCancelSelected = useCallback(() => {
     const {
       getNodes,
@@ -1054,6 +1107,9 @@ export const useNodesInteractions = () => {
     setNodes(newNodes)
   }, [store])
 
+  /**
+   * 处理节点菜单展示的位置
+   */
   const handleNodeContextMenu = useCallback((e: MouseEvent, node: Node) => {
     if (node.type === CUSTOM_NOTE_NODE || node.type === CUSTOM_ITERATION_START_NODE)
       return
@@ -1071,6 +1127,9 @@ export const useNodesInteractions = () => {
     handleNodeSelect(node.id)
   }, [workflowStore, handleNodeSelect])
 
+  /**
+   * 处理节点复制
+   */
   const handleNodesCopy = useCallback((nodeId?: string) => {
     if (getNodesReadOnly())
       return
@@ -1105,6 +1164,9 @@ export const useNodesInteractions = () => {
     }
   }, [getNodesReadOnly, store, workflowStore])
 
+  /**
+   * 处理节点粘贴
+   */
   const handleNodesPaste = useCallback(() => {
     if (getNodesReadOnly())
       return
@@ -1178,6 +1240,9 @@ export const useNodesInteractions = () => {
     }
   }, [getNodesReadOnly, workflowStore, store, reactflow, saveStateToHistory, handleSyncWorkflowDraft, handleNodeIterationChildrenCopy])
 
+  /**
+   * 处理节点复制并粘贴
+   */
   const handleNodesDuplicate = useCallback((nodeId?: string) => {
     if (getNodesReadOnly())
       return
@@ -1186,6 +1251,9 @@ export const useNodesInteractions = () => {
     handleNodesPaste()
   }, [getNodesReadOnly, handleNodesCopy, handleNodesPaste])
 
+  /**
+   * 处理节点删除
+   */
   const handleNodesDelete = useCallback(() => {
     if (getNodesReadOnly())
       return
@@ -1214,6 +1282,9 @@ export const useNodesInteractions = () => {
       handleNodeDelete(selectedNode.id)
   }, [store, getNodesReadOnly, handleNodeDelete])
 
+  /**
+   * 处理节点调整大小
+   */
   const handleNodeResize = useCallback((nodeId: string, params: ResizeParamsWithDirection) => {
     if (getNodesReadOnly())
       return
@@ -1270,6 +1341,9 @@ export const useNodesInteractions = () => {
     saveStateToHistory(WorkflowHistoryEvent.NodeResize)
   }, [getNodesReadOnly, store, handleSyncWorkflowDraft, saveStateToHistory])
 
+  /**
+   * 处理节点取消连接
+   */
   const handleNodeDisconnect = useCallback((nodeId: string) => {
     if (getNodesReadOnly())
       return
@@ -1306,6 +1380,9 @@ export const useNodesInteractions = () => {
     saveStateToHistory(WorkflowHistoryEvent.EdgeDelete)
   }, [store, getNodesReadOnly, handleSyncWorkflowDraft, saveStateToHistory])
 
+  /**
+   * 处理历史数据回退
+   */
   const handleHistoryBack = useCallback(() => {
     if (getNodesReadOnly() || getWorkflowReadOnly())
       return
@@ -1321,6 +1398,9 @@ export const useNodesInteractions = () => {
     setNodes(nodes)
   }, [store, undo, workflowHistoryStore, getNodesReadOnly, getWorkflowReadOnly])
 
+  /**
+   * 处理历史数据前进
+   */
   const handleHistoryForward = useCallback(() => {
     if (getNodesReadOnly() || getWorkflowReadOnly())
       return

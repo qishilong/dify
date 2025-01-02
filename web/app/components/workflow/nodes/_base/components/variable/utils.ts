@@ -33,10 +33,21 @@ import {
 import type { PromptItem } from '@/models/debug'
 import { VAR_REGEX } from '@/config'
 
+/**
+ * 判断是否是系统变量
+ * valueSelector[0] === 'sys' || valueSelector[1] === 'sys'
+ * @param valueSelector
+ * @returns
+ */
 export const isSystemVar = (valueSelector: ValueSelector) => {
   return valueSelector[0] === 'sys' || valueSelector[1] === 'sys'
 }
 
+/**
+ * 判断是否是环境变量相关的变量
+ * @param valueSelector
+ * @returns
+ */
 export const isENV = (valueSelector: ValueSelector) => {
   return valueSelector[0] === 'env'
 }
@@ -388,6 +399,16 @@ const formatItem = (
 
   return res
 }
+
+/**
+ * 获取节点输出的变量
+ * @param nodes 节点
+ * @param isChatMode 是否是chatflow模式
+ * @param filterVar
+ * @param environmentVariables
+ * @param conversationVariables
+ * @returns 节点输出的变量
+ */
 export const toNodeOutputVars = (
   nodes: any[],
   isChatMode: boolean,
@@ -426,6 +447,11 @@ export const toNodeOutputVars = (
   return res
 }
 
+/**
+ * 获取迭代节点里面迭代项的类型
+ * @param param0
+ * @returns
+ */
 const getIterationItemType = ({
   valueSelector,
   beforeNodesOutputVars,
@@ -476,6 +502,11 @@ const getIterationItemType = ({
   }
 }
 
+/**
+ * 获取变量类型
+ * @param param0
+ * @returns
+ */
 export const getVarType = ({
   parentNode,
   valueSelector,
@@ -560,6 +591,12 @@ export const getVarType = ({
 }
 
 // node output vars + parent inner vars(if in iteration or other wrap node)
+// 节点输出变量 + 父节点内部变量（如果在迭代或其他包装节点中）
+/**
+ * 获取节点可用变量
+ * @param param0
+ * @returns {Array} 之前的节点输出的变量，也就是当前节点可以使用的变量
+ */
 export const toNodeAvailableVars = ({
   parentNode,
   t,
@@ -635,6 +672,11 @@ export const getNodeInfoById = (nodes: any, id: string) => {
   return nodes.find((node: any) => node.id === id)
 }
 
+/**
+ * 得到prompt中书写的变量，不是在context中得到的变量
+ * @param prompts
+ * @returns
+ */
 const matchNotSystemVars = (prompts: string[]) => {
   if (!prompts)
     return []
@@ -650,6 +692,13 @@ const matchNotSystemVars = (prompts: string[]) => {
   return uniqVars
 }
 
+/**
+ * 替换文本中的旧变量选择器为新变量选择器
+ * @param text 文本
+ * @param oldVar 旧变量选择器
+ * @param newVar 新变量选择器
+ * @returns
+ */
 const replaceOldVarInText = (text: string, oldVar: ValueSelector, newVar: ValueSelector) => {
   if (!text || typeof text !== 'string')
     return text
@@ -660,6 +709,13 @@ const replaceOldVarInText = (text: string, oldVar: ValueSelector, newVar: ValueS
   return text.replaceAll(`{{#${oldVar.join('.')}#}}`, `{{#${newVar.join('.')}#}}`)
 }
 
+/**
+ * 得到节点使用的变量选择器，不包括当前节点输出的变量选择器
+ * 变量是以变量选择器的形式选择和使用的
+ * 一个节点输出了变量之后，后续节点通过这个节点输出变量的变量选择器选择这个变量，所以简单的可以说成变量是以变量选择器的形式选择和使用的
+ * @param node  节点
+ * @returns
+ */
 export const getNodeUsedVars = (node: Node): ValueSelector[] => {
   const { data } = node
   const { type } = data
@@ -677,7 +733,7 @@ export const getNodeUsedVars = (node: Node): ValueSelector[] => {
       })
       break
     }
-    case BlockEnum.LLM: {
+    case BlockEnum.LLM: { // LLM 节点的需要针对prompt中的变量和context中的变量分别处理
       const payload = (data as LLMNodeType)
       const isChatModel = payload.model?.mode === 'chat'
       let prompts: string[] = []
@@ -688,8 +744,8 @@ export const getNodeUsedVars = (node: Node): ValueSelector[] => {
       }
       else { prompts = [(payload.prompt_template as PromptItem).text] }
 
-      const inputVars: ValueSelector[] = matchNotSystemVars(prompts)
-      const contextVar = (data as LLMNodeType).context?.variable_selector ? [(data as LLMNodeType).context?.variable_selector] : []
+      const inputVars: ValueSelector[] = matchNotSystemVars(prompts) // prompt中的变量
+      const contextVar = (data as LLMNodeType).context?.variable_selector ? [(data as LLMNodeType).context?.variable_selector] : [] // context中的变量
       res = [...inputVars, ...contextVar]
       break
     }
@@ -715,7 +771,7 @@ export const getNodeUsedVars = (node: Node): ValueSelector[] => {
       })
       break
     }
-    case BlockEnum.QuestionClassifier: {
+    case BlockEnum.QuestionClassifier: { // 问题分类器节点的需要query-输入（选择）的变量和instruction-指令中的变量分别处理
       const payload = (data as QuestionClassifierNodeType)
       res = [payload.query_variable_selector]
       const varInInstructions = matchNotSystemVars([payload.instruction || ''])
@@ -834,6 +890,12 @@ export const getNodeUsedVarPassToServerKey = (node: Node, valueSelector: ValueSe
   return res
 }
 
+/**
+ * 找到使用了这个变量选择器的节点
+ * @param varSelector 变量选择器
+ * @param availableNodes 可用节点
+ * @returns
+ */
 export const findUsedVarNodes = (varSelector: ValueSelector, availableNodes: Node[]): Node[] => {
   const res: Node[] = []
   availableNodes.forEach((node) => {
@@ -844,6 +906,13 @@ export const findUsedVarNodes = (varSelector: ValueSelector, availableNodes: Nod
   return res
 }
 
+/**
+ * 更新节点中的变量选择器
+ * @param oldNode
+ * @param oldVarSelector
+ * @param newVarSelector
+ * @returns
+ */
 export const updateNodeVars = (oldNode: Node, oldVarSelector: ValueSelector, newVarSelector: ValueSelector): Node => {
   const newNode = produce(oldNode, (draft: any) => {
     const { data } = draft
@@ -1030,6 +1099,14 @@ export const updateNodeVars = (oldNode: Node, oldVarSelector: ValueSelector, new
   })
   return newNode
 }
+
+/**
+ * 将变量转为变量选择器列表，单个变量
+ * @param v
+ * @param parentValueSelector
+ * @param res
+ * @returns
+ */
 const varToValueSelectorList = (v: Var, parentValueSelector: ValueSelector, res: ValueSelector[]) => {
   if (!v.variable)
     return
@@ -1043,6 +1120,12 @@ const varToValueSelectorList = (v: Var, parentValueSelector: ValueSelector, res:
   }
 }
 
+/**
+ * 将变量转为变量选择器列表，多个变量
+ * @param vars 变量
+ * @param parentValueSelector 父变量选择器
+ * @param res 结果
+ */
 const varsToValueSelectorList = (vars: Var | Var[], parentValueSelector: ValueSelector, res: ValueSelector[]) => {
   if (Array.isArray(vars)) {
     vars.forEach((v) => {
@@ -1052,6 +1135,12 @@ const varsToValueSelectorList = (vars: Var | Var[], parentValueSelector: ValueSe
   varToValueSelectorList(vars as Var, parentValueSelector, res)
 }
 
+/**
+ * 得到节点输出的变量选择器
+ * @param node
+ * @param isChatMode
+ * @returns
+ */
 export const getNodeOutputVars = (node: Node, isChatMode: boolean): ValueSelector[] => {
   const { data, id } = node
   const { type } = data

@@ -25,17 +25,28 @@ import { useToastContext } from '@/app/components/base/toast'
 import { CollectionType } from '@/app/components/tools/types'
 import { useGetLanguage } from '@/context/i18n'
 
+/**
+ * 主要用来获取需要告警的节点
+ * @param nodes
+ * @param edges
+ * @returns
+ */
 export const useChecklist = (nodes: Node[], edges: Edge[]) => {
   const { t } = useTranslation()
   const language = useGetLanguage()
   const nodesExtraData = useNodesExtraData()
   const isChatMode = useIsChatMode()
+  // 内置工具
   const buildInTools = useStore(s => s.buildInTools)
+  // 自定义工具
   const customTools = useStore(s => s.customTools)
+  // 工作流工具
   const workflowTools = useStore(s => s.workflowTools)
 
+  // 需要警告的节点
   const needWarningNodes = useMemo(() => {
     const list = []
+    // 获取有效的节点
     const { validNodes } = getValidTreeNodes(nodes.filter(node => node.type === CUSTOM_NODE), edges)
 
     for (let i = 0; i < nodes.length; i++) {
@@ -43,7 +54,9 @@ export const useChecklist = (nodes: Node[], edges: Edge[]) => {
       let toolIcon
       let moreDataForCheckValid
 
+      // 工具面板里面的工具
       if (node.data.type === BlockEnum.Tool) {
+        // 内置工具、自定义工具、工作流工具
         const { provider_type } = node.data
 
         moreDataForCheckValid = getToolCheckParams(node.data as ToolNodeType, buildInTools, customTools, workflowTools, language)
@@ -97,6 +110,10 @@ export const useChecklist = (nodes: Node[], edges: Edge[]) => {
   return needWarningNodes
 }
 
+/**
+ * 在发布前检查
+ * @returns
+ */
 export const useChecklistBeforePublish = () => {
   const { t } = useTranslation()
   const language = useGetLanguage()

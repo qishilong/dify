@@ -6,6 +6,11 @@ import {
 import { useIsChatMode } from './use-workflow'
 import { useNodesInitialData } from './use-nodes-data'
 
+/**
+ * chatflow 类型初始化工作流模板（开始节点 --> LLM节点 --> 直接回复节点）
+ * 工作流类型 或者（开始节点）
+ * @returns
+ */
 export const useWorkflowTemplate = () => {
   const isChatMode = useIsChatMode()
   const nodesInitialData = useNodesInitialData()

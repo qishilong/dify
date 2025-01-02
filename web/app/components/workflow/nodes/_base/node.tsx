@@ -48,6 +48,11 @@ type BaseNodeProps = {
   children: ReactElement
 } & NodeProps
 
+/**
+ * 节点基础组件
+ * @param param0
+ * @returns
+ */
 const BaseNode: FC<BaseNodeProps> = ({
   id,
   data,

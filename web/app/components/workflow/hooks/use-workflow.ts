@@ -9,9 +9,9 @@ import { uniqBy } from 'lodash-es'
 import { useTranslation } from 'react-i18next'
 import { useContext } from 'use-context-selector'
 import {
-  getIncomers,
-  getOutgoers,
-  useStoreApi,
+  getIncomers, // 获取给定节点的所有直接上游节点，只会追溯一层的关系
+  getOutgoers, // 获取给定节点的所有直接下游节点，只会追溯一层的关系
+  useStoreApi, // 访问 ReactFlow 的内部存储 API。这个存储 API 包含了 ReactFlow 组件的各种状态信息，例如节点信息、边信息、视图状态等。
 } from 'reactflow'
 import type {
   Connection,
@@ -59,6 +59,11 @@ import { CollectionType } from '@/app/components/tools/types'
 import { CUSTOM_ITERATION_START_NODE } from '@/app/components/workflow/nodes/iteration-start/constants'
 import { useWorkflowConfig } from '@/service/use-workflow'
 
+/**
+ * 判断是哪种flow类型（chatflow、工作流）
+ * chatflow: advanced-chat
+ * @returns
+ */
 export const useIsChatMode = () => {
   const appDetail = useAppStore(s => s.appDetail)
 
@@ -72,12 +77,17 @@ export const useWorkflow = () => {
   const workflowStore = useWorkflowStore()
   const appId = useStore(s => s.appId)
   const nodesExtraData = useNodesExtraData()
+  // 获取工作流配置
   const { data: workflowConfig } = useWorkflowConfig(appId)
+  // 设置面板宽度
   const setPanelWidth = useCallback((width: number) => {
     localStorage.setItem('workflow-node-panel-width', `${width}`)
     workflowStore.setState({ panelWidth: width })
   }, [workflowStore])
 
+  /**
+   * 获取给定节点的所有叶子节点
+   */
   const getTreeLeafNodes = useCallback((nodeId: string) => {
     const {
       getNodes,
@@ -87,6 +97,7 @@ export const useWorkflow = () => {
     let startNode = nodes.find(node => node.data.type === BlockEnum.Start)
     const currentNode = nodes.find(node => node.id === nodeId)
 
+    // 针对当前节点是迭代节点的情况
     if (currentNode?.parentId)
       startNode = nodes.find(node => node.parentId === currentNode.parentId && node.type === CUSTOM_ITERATION_START_NODE)
 
@@ -94,6 +105,12 @@ export const useWorkflow = () => {
       return []
 
     const list: Node[] = []
+    /**
+     * 前序
+     * @param root
+     * @param callback
+     * @returns
+     */
     const preOrder = (root: Node, callback: (node: Node) => void) => {
       if (root.id === nodeId)
         return
@@ -113,15 +130,20 @@ export const useWorkflow = () => {
       list.push(node)
     })
 
+    // 获取给定节点的所有上游节点
     const incomers = getIncomers({ id: nodeId } as Node, nodes, edges)
 
     list.push(...incomers)
 
+    // 过滤出支持输出变量的节点
     return uniqBy(list, 'id').filter((item) => {
       return SUPPORT_OUTPUT_VARS_NODE.includes(item.data.type)
     })
   }, [store])
 
+  /**
+   * 获取相同分支上的所有前置节点
+   */
   const getBeforeNodesInSameBranch = useCallback((nodeId: string, newNodes?: Node[], newEdges?: Edge[]) => {
     const {
       getNodes,
@@ -135,6 +157,7 @@ export const useWorkflow = () => {
     if (!currentNode)
       return list
 
+    // 针对当前节点是迭代节点的情况，可以理解为将将迭代节点内的所有节点视为一个新的整体
     if (currentNode.parentId) {
       const parentNode = nodes.find(node => node.id === currentNode.parentId)
       if (parentNode) {
@@ -144,15 +167,17 @@ export const useWorkflow = () => {
       }
     }
 
+    // 遍历保存所有前置节点
     const traverse = (root: Node, callback: (node: Node) => void) => {
       if (root) {
         const incomers = getIncomers(root, nodes, newEdges || edges)
 
         if (incomers.length) {
           incomers.forEach((node) => {
+            // 递归获取所有前置节点过程中可能会导致一些节点被重复计算，所以需要去重判断
             if (!list.find(n => node.id === n.id)) {
               callback(node)
-              traverse(node, callback)
+              traverse(node, callback) // 递归处理，所以可以获取所有的前置节点
             }
           })
         }
@@ -164,6 +189,7 @@ export const useWorkflow = () => {
 
     const length = list.length
     if (length) {
+      // 按照节点在工作流中的顺序返回节点列表，所以需要 reverse 一下，并且只返回支持输出变量的节点
       return uniqBy(list, 'id').reverse().filter((item) => {
         return SUPPORT_OUTPUT_VARS_NODE.includes(item.data.type)
       })
@@ -172,6 +198,9 @@ export const useWorkflow = () => {
     return []
   }, [store])
 
+  /**
+   * 获取相同分支上的所有前置节点，包括父节点
+   */
   const getBeforeNodesInSameBranchIncludeParent = useCallback((nodeId: string, newNodes?: Node[], newEdges?: Edge[]) => {
     const nodes = getBeforeNodesInSameBranch(nodeId, newNodes, newEdges)
     const {
@@ -187,6 +216,9 @@ export const useWorkflow = () => {
     return nodes
   }, [getBeforeNodesInSameBranch, store])
 
+  /**
+   * 获取相同分支上的所有后置节点
+   */
   const getAfterNodesInSameBranch = useCallback((nodeId: string) => {
     const {
       getNodes,
@@ -218,6 +250,9 @@ export const useWorkflow = () => {
     return uniqBy(list, 'id')
   }, [store])
 
+  /**
+   * 获取给定节点的所有直接上游节点，只会追溯一层的关系
+   */
   const getBeforeNodeById = useCallback((nodeId: string) => {
     const {
       getNodes,
@@ -229,6 +264,10 @@ export const useWorkflow = () => {
     return getIncomers(node, nodes, edges)
   }, [store])
 
+  /**
+   * 获取迭代节点里面的所有子节点
+   * 迭代节点的规则是迭代节点里面所有节点的parentId都是迭代节点的id
+   */
   const getIterationNodeChildren = useCallback((nodeId: string) => {
     const {
       getNodes,
@@ -238,6 +277,9 @@ export const useWorkflow = () => {
     return nodes.filter(node => node.parentId === nodeId)
   }, [store])
 
+  /**
+   * 判断当前节点是否是从开始节点开始的
+   */
   const isFromStartNode = useCallback((nodeId: string) => {
     const { getNodes } = store.getState()
     const nodes = getNodes()
@@ -265,14 +307,17 @@ export const useWorkflow = () => {
     return checkPreviousNodes(currentNode)
   }, [store, getBeforeNodeById])
 
-  const handleOutVarRenameChange = useCallback((nodeId: string, oldValeSelector: ValueSelector, newVarSelector: ValueSelector) => {
+  /**
+   * 处理将当前节点的输出变量重命名，同时更新当前节点在同一分支下后续节点所有使用了当前节点输出变量的节点
+   */
+  const handleOutVarRenameChange = useCallback((nodeId: string, oldValueSelector: ValueSelector, newVarSelector: ValueSelector) => {
     const { getNodes, setNodes } = store.getState()
     const afterNodes = getAfterNodesInSameBranch(nodeId)
-    const effectNodes = findUsedVarNodes(oldValeSelector, afterNodes)
+    const effectNodes = findUsedVarNodes(oldValueSelector, afterNodes)
     if (effectNodes.length > 0) {
       const newNodes = getNodes().map((node) => {
         if (effectNodes.find(n => n.id === node.id))
-          return updateNodeVars(node, oldValeSelector, newVarSelector)
+          return updateNodeVars(node, oldValueSelector, newVarSelector)
 
         return node
       })
@@ -282,6 +327,9 @@ export const useWorkflow = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store])
 
+  /**
+   * 判断当前变量选择器是否在当前分支的后续节点中使用
+   */
   const isVarUsedInNodes = useCallback((varSelector: ValueSelector) => {
     const nodeId = varSelector[0]
     const afterNodes = getAfterNodesInSameBranch(nodeId)
@@ -289,6 +337,9 @@ export const useWorkflow = () => {
     return effectNodes.length > 0
   }, [getAfterNodesInSameBranch])
 
+  /**
+   * 移除当前分支的后续节点中使用了当前变量选择器的节点中的变量选择器
+   */
   const removeUsedVarInNodes = useCallback((varSelector: ValueSelector) => {
     const nodeId = varSelector[0]
     const { getNodes, setNodes } = store.getState()
@@ -305,6 +356,9 @@ export const useWorkflow = () => {
     }
   }, [getAfterNodesInSameBranch, store])
 
+  /**
+   * 判断当前节点的输出变量是否在当前分支的后续节点中使用
+   */
   const isNodeVarsUsedInNodes = useCallback((node: Node, isChatMode: boolean) => {
     const outputVars = getNodeOutputVars(node, isChatMode)
     const isUsed = outputVars.some((varSelector) => {
@@ -313,6 +367,9 @@ export const useWorkflow = () => {
     return isUsed
   }, [isVarUsedInNodes])
 
+  /**
+   * 检查当前节点是否超过最大并行分支限制
+   */
   const checkParallelLimit = useCallback((nodeId: string, nodeHandle = 'source') => {
     const {
       edges,
@@ -327,6 +384,9 @@ export const useWorkflow = () => {
     return true
   }, [store, workflowStore, t])
 
+  /**
+   * 检查节点是否超过嵌套并行限制
+   */
   const checkNestedParallelLimit = useCallback((nodes: Node[], edges: Edge[], parentNodeId?: string) => {
     const {
       parallelList,
@@ -339,6 +399,7 @@ export const useWorkflow = () => {
     for (let i = 0; i < parallelList.length; i++) {
       const parallel = parallelList[i]
 
+      // 检查是否超过最大并行嵌套层数
       if (parallel.depth > (workflowConfig?.parallel_depth_limit || PARALLEL_DEPTH_LIMIT)) {
         const { setShowTips } = workflowStore.getState()
         setShowTips(t('workflow.common.parallelTip.depthLimit', { num: (workflowConfig?.parallel_depth_limit || PARALLEL_DEPTH_LIMIT) }))
@@ -349,6 +410,13 @@ export const useWorkflow = () => {
     return true
   }, [t, workflowStore, workflowConfig?.parallel_depth_limit])
 
+  /**
+   * 判断两个节点是否可以连接（是否是有效的连接）
+   * @param source 源节点 ID
+   * @param sourceHandle 源节点连接点
+   * @param target 目标节点 ID
+   * @returns
+   */
   const isValidConnection = useCallback(({ source, sourceHandle, target }: Connection) => {
     const {
       edges,
@@ -378,6 +446,12 @@ export const useWorkflow = () => {
         return false
     }
 
+    /**
+     * 判断是否有环
+     * @param node
+     * @param visited
+     * @returns
+     */
     const hasCycle = (node: Node, visited = new Set()) => {
       if (visited.has(node.id))
         return false
@@ -395,10 +469,16 @@ export const useWorkflow = () => {
     return !hasCycle(targetNode)
   }, [store, nodesExtraData, checkParallelLimit])
 
+  /**
+   * 格式化时间
+   */
   const formatTimeFromNow = useCallback((time: number) => {
     return dayjs(time).locale(locale === 'zh-Hans' ? 'zh-cn' : locale).fromNow()
   }, [locale])
 
+  /**
+   * 根据节点ID获取目标节点，如果没有找到目标节点，则返回开始节点
+   */
   const getNode = useCallback((nodeId?: string) => {
     const { getNodes } = store.getState()
     const nodes = getNodes()
@@ -427,6 +507,10 @@ export const useWorkflow = () => {
   }
 }
 
+/**
+ * 设置工作流工具数据
+ * @returns
+ */
 export const useFetchToolsData = () => {
   const workflowStore = useWorkflowStore()
 
@@ -459,6 +543,10 @@ export const useFetchToolsData = () => {
   }
 }
 
+/**
+ * 初始化一些工作流数据
+ * @returns #{data: 工作流数据, isLoading: 是否正在获取数据或者正在初始化}
+ */
 export const useWorkflowInit = () => {
   const workflowStore = useWorkflowStore()
   const {
@@ -474,6 +562,10 @@ export const useWorkflowInit = () => {
     workflowStore.setState({ appId: appDetail.id })
   }, [appDetail.id, workflowStore])
 
+  /**
+   * 获取工作流草稿数据
+   * 如果报错了并且报错信息是 draft_workflow_not_exist，则先创建并保存一个草稿，然后再获取草稿数据
+   */
   const handleGetInitialWorkflowData = useCallback(async () => {
     try {
       const res = await fetchWorkflowDraft(`/apps/${appDetail.id}/workflows/draft`)
@@ -523,6 +615,10 @@ export const useWorkflowInit = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /**
+   * 获取工作流预加载数据
+   * 默认配置信息、发布时间等
+   */
   const handleFetchPreloadData = useCallback(async () => {
     try {
       const nodesDefaultConfigsData = await fetchNodesDefaultConfigs(`/apps/${appDetail?.id}/workflows/default-workflow-block-configs`)
@@ -561,6 +657,10 @@ export const useWorkflowInit = () => {
   }
 }
 
+/**
+ * 判断工作流是否是只读状态
+ * @returns
+ */
 export const useWorkflowReadOnly = () => {
   const workflowStore = useWorkflowStore()
   const workflowRunningData = useStore(s => s.workflowRunningData)
@@ -574,12 +674,20 @@ export const useWorkflowReadOnly = () => {
     getWorkflowReadOnly,
   }
 }
+
+/**
+ * 判断节点是否是只读状态
+ * @returns
+ */
 export const useNodesReadOnly = () => {
   const workflowStore = useWorkflowStore()
   const workflowRunningData = useStore(s => s.workflowRunningData)
   const historyWorkflowData = useStore(s => s.historyWorkflowData)
   const isRestoring = useStore(s => s.isRestoring)
 
+  /**
+   * 判断节点是否正在运行中，如果没有正在运行中，则返回历史数据，如果没有历史数据，则返回是否正在恢复中
+   */
   const getNodesReadOnly = useCallback(() => {
     const {
       workflowRunningData,
@@ -591,11 +699,16 @@ export const useNodesReadOnly = () => {
   }, [workflowStore])
 
   return {
-    nodesReadOnly: !!(workflowRunningData?.result.status === WorkflowRunningStatus.Running || historyWorkflowData || isRestoring),
+    nodesReadOnly: !!(workflowRunningData?.result.status === WorkflowRunningStatus.Running || historyWorkflowData || isRestoring), // 节点是否只读
     getNodesReadOnly,
   }
 }
 
+/**
+ * 获取工具里的各种工具节点图标
+ * @param data
+ * @returns
+ */
 export const useToolIcon = (data: Node['data']) => {
   const buildInTools = useStore(s => s.buildInTools)
   const customTools = useStore(s => s.customTools)
@@ -616,6 +729,9 @@ export const useToolIcon = (data: Node['data']) => {
   return toolIcon
 }
 
+/**
+ * 判断节点是否是迭代节点
+ */
 export const useIsNodeInIteration = (iterationId: string) => {
   const store = useStoreApi()
 

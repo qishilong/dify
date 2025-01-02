@@ -152,6 +152,7 @@ const CustomEdge = ({
             opacity: data._waitingRun ? 0.7 : 1,
           }}
         >
+          {/* 边中间的节点选择器 */}
           <BlockSelector
             open={open}
             onOpenChange={handleOpenChange}

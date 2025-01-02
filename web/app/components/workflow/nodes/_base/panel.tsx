@@ -51,6 +51,11 @@ type BasePanelProps = {
   children: ReactElement
 } & Node
 
+/**
+ * 节点基础面板
+ * @param param0
+ * @returns
+ */
 const BasePanel: FC<BasePanelProps> = ({
   id,
   data,

@@ -1,4 +1,10 @@
 import type { ToolCredential, ToolParameter } from '../types'
+
+/**
+ * 转换type
+ * @param type
+ * @returns
+ */
 const toType = (type: string) => {
   switch (type) {
     case 'string':
@@ -9,6 +15,12 @@ const toType = (type: string) => {
       return type
   }
 }
+
+/**
+ * 将工具参数转换为表单schema
+ * @param parameters
+ * @returns
+ */
 export const toolParametersToFormSchemas = (parameters: ToolParameter[]) => {
   if (!parameters)
     return []

@@ -103,6 +103,7 @@ const RunAndHistory: FC = () => {
       }
       <div className='mx-0.5 w-[1px] h-3.5 bg-divider-regular'></div>
       <ViewHistory />
+      {/* 检查清单 */}
       <Checklist disabled={nodesReadOnly} />
     </div>
   )

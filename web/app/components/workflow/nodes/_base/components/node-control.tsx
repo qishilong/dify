@@ -22,6 +22,12 @@ import {
 import Tooltip from '@/app/components/base/tooltip'
 
 type NodeControlProps = Pick<Node, 'id' | 'data'>
+
+/**
+ * 节点右上方的执行按钮和更多操作按钮（三个点）
+ * @param param0
+ * @returns
+ */
 const NodeControl: FC<NodeControlProps> = ({
   id,
   data,

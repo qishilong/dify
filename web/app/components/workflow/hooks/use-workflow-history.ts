@@ -15,6 +15,12 @@ import { useWorkflowHistoryStore } from '../workflow-history-store'
  * - InputChange events in Node Panels do not trigger state changes.
  * - Resizing UI elements does not trigger state changes.
  */
+/**
+ * 所有支持的创建新历史状态的事件。
+ * 当前限制：
+ * - 节点面板中的输入更改事件不会触发状态更改。
+ * - 调整UI元素大小不会触发状态更改。
+ */
 export enum WorkflowHistoryEvent {
   NodeTitleChange = 'NodeTitleChange',
   NodeDescriptionChange = 'NodeDescriptionChange',
@@ -64,6 +70,8 @@ export const useWorkflowHistory = () => {
   // Some events may be triggered multiple times in a short period of time.
   // We debounce the history state update to avoid creating multiple history states
   // with minimal changes.
+  // 一些事件可能会在短时间内多次触发。
+  // 我们对历史状态更新进行防抖处理，以避免创建多个变化最小的历史状态。
   const saveStateToHistoryRef = useRef(debounce((event: WorkflowHistoryEvent) => {
     workflowHistoryStore.setState({
       workflowHistoryEvent: event,
@@ -72,11 +80,16 @@ export const useWorkflowHistory = () => {
     })
   }, 500))
 
+  /**
+   * 通过相应的时间触发保存工作流数据，也可以说状态到历史记录，同时在历史数据中保存保存此次数据的触发事件
+   */
   const saveStateToHistory = useCallback((event: WorkflowHistoryEvent) => {
     switch (event) {
       case WorkflowHistoryEvent.NoteChange:
         // Hint: Note change does not trigger when note text changes,
         // because the note editors have their own history states.
+        // 提示：当笔记文本更改时不会触发笔记更改，
+        // 因为笔记编辑器有自己的历史状态。
         saveStateToHistoryRef.current(event)
         break
       case WorkflowHistoryEvent.NodeTitleChange:
@@ -99,10 +112,16 @@ export const useWorkflowHistory = () => {
         // We do not create a history state for every event.
         // Some events of reactflow may change things the user would not want to undo/redo.
         // For example: UI state changes like selecting a node.
+        // 我们不会为每个事件创建历史状态。
+        // reactflow 的某些事件可能会更改用户不希望撤销/重做的内容。
+        // 例如：选择节点等 UI 状态更改。
         break
     }
   }, [])
 
+  /**
+   * 获取历史记录的标签
+   */
   const getHistoryLabel = useCallback((event: WorkflowHistoryEvent) => {
     switch (event) {
       case WorkflowHistoryEvent.NodeTitleChange:

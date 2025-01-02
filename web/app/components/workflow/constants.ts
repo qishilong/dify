@@ -203,7 +203,14 @@ export const NODES_EXTRA_DATA: Record<BlockEnum, NodesExtraData> = {
 
 }
 
+/**
+ * 全部可用的块（节点），针对workflow模式
+ */
 export const ALL_CHAT_AVAILABLE_BLOCKS = Object.keys(NODES_EXTRA_DATA).filter(key => key !== BlockEnum.End && key !== BlockEnum.Start) as BlockEnum[]
+
+/**
+ * 全部可用的块（节点），针对chatflow模式
+ */
 export const ALL_COMPLETION_AVAILABLE_BLOCKS = Object.keys(NODES_EXTRA_DATA).filter(key => key !== BlockEnum.Answer && key !== BlockEnum.Start) as BlockEnum[]
 
 export const NODES_INITIAL_DATA = {
@@ -361,8 +368,16 @@ export const ITERATION_PADDING = {
   bottom: 20,
   left: 16,
 }
+
+/**
+ * 最大并行分支
+ */
 export const PARALLEL_LIMIT = 10
-export const PARALLEL_DEPTH_LIMIT = 3
+
+/**
+ * 最大并行嵌套层数
+ */
+export const PARALLEL_DEPTH_LIMIT = 30
 
 export const RETRIEVAL_OUTPUT_STRUCT = `{
   "content": "",

@@ -21,6 +21,7 @@ export const useHelpline = () => {
         showVerticalHelpLineNodes: [],
       }
     }
+    // 水平方向的辅助线
     const showHorizontalHelpLineNodes = nodes.filter((n) => {
       if (n.id === node.id)
         return false
@@ -62,6 +63,7 @@ export const useHelpline = () => {
       setHelpLineHorizontal()
     }
 
+    // 垂直方向的辅助线
     const showVerticalHelpLineNodes = nodes.filter((n) => {
       if (n.id === node.id)
         return false

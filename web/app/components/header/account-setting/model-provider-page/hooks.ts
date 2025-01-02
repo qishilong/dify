@@ -142,6 +142,11 @@ export const useCurrentProviderAndModel = (modelList: Model[], defaultModel?: De
   }
 }
 
+/**
+ * 获取当前模型提供商和模型和模型列表
+ * @param defaultModel
+ * @returns
+ */
 export const useTextGenerationCurrentProviderAndModelAndModelList = (defaultModel?: DefaultModel) => {
   const { textGenerationModelList } = useProviderContext()
   const activeTextGenerationModelList = textGenerationModelList.filter(model => model.status === ModelStatusEnum.active)

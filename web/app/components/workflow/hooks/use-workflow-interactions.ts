@@ -32,6 +32,10 @@ import { exportAppConfig } from '@/service/apps'
 import { useToastContext } from '@/app/components/base/toast'
 import { useStore as useAppStore } from '@/app/components/app/store'
 
+/**
+ * 与flow预览和交互有关，比如取消debug和preview面板
+ * @returns
+ */
 export const useWorkflowInteractions = () => {
   const workflowStore = useWorkflowStore()
   const { handleNodeCancelRunningStatus } = useNodesInteractions()
@@ -51,6 +55,12 @@ export const useWorkflowInteractions = () => {
   }
 }
 
+/**
+ * 设置flow的交互模式
+ * pointer: 鼠标指针交互
+ * hand: 拖拽flow交互
+ * @returns
+ */
 export const useWorkflowMoveMode = () => {
   const setControlMode = useStore(s => s.setControlMode)
   const {
@@ -58,6 +68,9 @@ export const useWorkflowMoveMode = () => {
   } = useNodesReadOnly()
   const { handleSelectionCancel } = useSelectionInteractions()
 
+  /**
+   * 设置为鼠标指针交互模式
+   */
   const handleModePointer = useCallback(() => {
     if (getNodesReadOnly())
       return
@@ -65,6 +78,9 @@ export const useWorkflowMoveMode = () => {
     setControlMode(ControlMode.Pointer)
   }, [getNodesReadOnly, setControlMode])
 
+  /**
+   * 设置为拖拽flow交互模式
+   */
   const handleModeHand = useCallback(() => {
     if (getNodesReadOnly())
       return
@@ -79,6 +95,10 @@ export const useWorkflowMoveMode = () => {
   }
 }
 
+/**
+ * flow 优化布局
+ * @returns
+ */
 export const useWorkflowOrganize = () => {
   const workflowStore = useWorkflowStore()
   const store = useStoreApi()
@@ -203,11 +223,18 @@ export const useWorkflowZoom = () => {
   }
 }
 
+/**
+ * 更新flow
+ * @returns
+ */
 export const useWorkflowUpdate = () => {
   const reactflow = useReactFlow()
   const workflowStore = useWorkflowStore()
   const { eventEmitter } = useEventEmitterContextContext()
 
+  /**
+   * 更新工作流画布
+   */
   const handleUpdateWorkflowCanvas = useCallback((payload: WorkflowDataUpdater) => {
     const {
       nodes,
@@ -225,6 +252,9 @@ export const useWorkflowUpdate = () => {
     setViewport(viewport)
   }, [eventEmitter, reactflow])
 
+  /**
+   * 刷新工作流
+   */
   const handleRefreshWorkflowDraft = useCallback(() => {
     const {
       appId,
@@ -254,6 +284,12 @@ export const useWorkflowUpdate = () => {
   }
 }
 
+/**
+ * 导出flow为DSL
+ * @returns {Object} - 返回对象
+ * @returns {Function} exportCheck - 导出前检查
+ * @returns {Function} handleExportDSL - 导出DSL
+ */
 export const useDSL = () => {
   const { t } = useTranslation()
   const { notify } = useToastContext()
@@ -263,6 +299,9 @@ export const useDSL = () => {
 
   const appDetail = useAppStore(s => s.appDetail)
 
+  /**
+   * 导出DSL
+   */
   const handleExportDSL = useCallback(async (include = false) => {
     if (!appDetail)
       return
@@ -291,6 +330,9 @@ export const useDSL = () => {
     }
   }, [appDetail, notify, t, doSyncWorkflowDraft, exporting])
 
+  /**
+   * 导出为DSL前检查
+   */
   const exportCheck = useCallback(async () => {
     if (!appDetail)
       return

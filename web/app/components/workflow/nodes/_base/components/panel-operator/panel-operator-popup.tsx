@@ -29,6 +29,13 @@ type PanelOperatorPopupProps = {
   onClosePopup: () => void
   showHelpLink?: boolean
 }
+
+/**
+ * 节点说明弹窗
+ * 点击节点有上角的三个点出现的弹窗
+ * @param param0
+ * @returns
+ */
 const PanelOperatorPopup = ({
   id,
   data,

@@ -11,6 +11,10 @@ export function useFeatures<T>(selector: (state: FeatureStoreState) => T): T {
   return useStore(store, selector)
 }
 
+/**
+ * 获取功能项配置数据
+ * @returns
+ */
 export function useFeaturesStore() {
   return useContext(FeaturesContext)
 }

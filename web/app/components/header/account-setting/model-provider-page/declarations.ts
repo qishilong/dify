@@ -47,6 +47,9 @@ export enum ConfigurationMethodEnum {
   fetchFromRemote = 'fetch-from-remote',
 }
 
+/**
+ * 枚举模型类型
+ */
 export enum ModelFeatureEnum {
   toolCall = 'tool-call',
   multiToolCall = 'multi-tool-call',

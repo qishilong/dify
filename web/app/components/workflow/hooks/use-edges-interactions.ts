@@ -21,6 +21,9 @@ export const useEdgesInteractions = () => {
   const { getNodesReadOnly } = useNodesReadOnly()
   const { saveStateToHistory } = useWorkflowHistory()
 
+  /**
+   * 处理鼠标进入边（hover，click等）
+   */
   const handleEdgeEnter = useCallback<EdgeMouseHandler>((_, edge) => {
     if (getNodesReadOnly())
       return
@@ -29,6 +32,7 @@ export const useEdgesInteractions = () => {
       edges,
       setEdges,
     } = store.getState()
+    // 只是修改当前 edge 是否被 enter 的状态
     const newEdges = produce(edges, (draft) => {
       const currentEdge = draft.find(e => e.id === edge.id)!
 
@@ -37,6 +41,9 @@ export const useEdgesInteractions = () => {
     setEdges(newEdges)
   }, [store, getNodesReadOnly])
 
+  /**
+   * 处理鼠标离开边（leave）
+   */
   const handleEdgeLeave = useCallback<EdgeMouseHandler>((_, edge) => {
     if (getNodesReadOnly())
       return
@@ -45,6 +52,7 @@ export const useEdgesInteractions = () => {
       edges,
       setEdges,
     } = store.getState()
+    // 只是修改当前 edge 是否被 leave 的状态
     const newEdges = produce(edges, (draft) => {
       const currentEdge = draft.find(e => e.id === edge.id)!
 
@@ -53,6 +61,9 @@ export const useEdgesInteractions = () => {
     setEdges(newEdges)
   }, [store, getNodesReadOnly])
 
+  /**
+   * 处理删除分支时删除所有的边
+   */
   const handleEdgeDeleteByDeleteBranch = useCallback((nodeId: string, branchId: string) => {
     if (getNodesReadOnly())
       return
@@ -63,6 +74,7 @@ export const useEdgesInteractions = () => {
       edges,
       setEdges,
     } = store.getState()
+    // 找到所有需要删除的边
     const edgeWillBeDeleted = edges.filter(edge => edge.source === nodeId && edge.sourceHandle === branchId)
 
     if (!edgeWillBeDeleted.length)
@@ -73,6 +85,7 @@ export const useEdgesInteractions = () => {
       edgeWillBeDeleted.map(edge => ({ type: 'remove', edge })),
       nodes,
     )
+    // 更新节点的额外数据（nodesConnectedSourceOrTargetHandleIdsMap）
     const newNodes = produce(nodes, (draft: Node[]) => {
       draft.forEach((node) => {
         if (nodesConnectedSourceOrTargetHandleIdsMap[node.id]) {
@@ -84,14 +97,19 @@ export const useEdgesInteractions = () => {
       })
     })
     setNodes(newNodes)
+    // 过滤掉需要删除的边
     const newEdges = produce(edges, (draft) => {
       return draft.filter(edge => !edgeWillBeDeleted.find(e => e.id === edge.id))
     })
     setEdges(newEdges)
     handleSyncWorkflowDraft()
+    // 记录触发事件，保存工作流数据到历史记录
     saveStateToHistory(WorkflowHistoryEvent.EdgeDeleteByDeleteBranch)
   }, [getNodesReadOnly, store, handleSyncWorkflowDraft, saveStateToHistory])
 
+  /**
+   * 处理删除边
+   */
   const handleEdgeDelete = useCallback(() => {
     if (getNodesReadOnly())
       return
@@ -110,7 +128,7 @@ export const useEdgesInteractions = () => {
     const nodes = getNodes()
     const nodesConnectedSourceOrTargetHandleIdsMap = getNodesConnectedSourceOrTargetHandleIdsMap(
       [
-        { type: 'remove', edge: currentEdge },
+        { type: 'remove', edge: currentEdge }, // 标记为 remove
       ],
       nodes,
     )
@@ -133,6 +151,9 @@ export const useEdgesInteractions = () => {
     saveStateToHistory(WorkflowHistoryEvent.EdgeDelete)
   }, [getNodesReadOnly, store, handleSyncWorkflowDraft, saveStateToHistory])
 
+  /**
+   * 处理边的变化
+   */
   const handleEdgesChange = useCallback<OnEdgesChange>((changes) => {
     if (getNodesReadOnly())
       return
@@ -144,6 +165,7 @@ export const useEdgesInteractions = () => {
 
     const newEdges = produce(edges, (draft) => {
       changes.forEach((change) => {
+        //  更新边的选中状态, type 总共有四种："add" | "remove" | "select" | "reset"
         if (change.type === 'select')
           draft.find(edge => edge.id === change.id)!.selected = change.selected
       })
@@ -151,6 +173,9 @@ export const useEdgesInteractions = () => {
     setEdges(newEdges)
   }, [store, getNodesReadOnly])
 
+  /**
+   * 处理取消边的运行状态
+   */
   const handleEdgeCancelRunningStatus = useCallback(() => {
     const {
       edges,
