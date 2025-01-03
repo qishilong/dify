@@ -30,6 +30,11 @@ const Icon = () => {
   )
 }
 
+/**
+ * flow上的自定义注释便签
+ * @param param0
+ * @returns
+ */
 const NoteNode = ({
   id,
   data,

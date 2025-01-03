@@ -97,12 +97,12 @@ import { FILE_EXTS } from '@/app/components/base/prompt-editor/constants'
 import { fetchFileUploadConfig } from '@/service/common'
 
 const nodeTypes = {
-  [CUSTOM_NODE]: CustomNode,
-  [CUSTOM_NOTE_NODE]: CustomNoteNode,
-  [CUSTOM_ITERATION_START_NODE]: CustomIterationStartNode,
+  [CUSTOM_NODE]: CustomNode, // 自定义节点
+  [CUSTOM_NOTE_NODE]: CustomNoteNode, // 自定义注释便签
+  [CUSTOM_ITERATION_START_NODE]: CustomIterationStartNode, // 自定义迭代节点
 }
 const edgeTypes = {
-  [CUSTOM_NODE]: CustomEdge,
+  [CUSTOM_NODE]: CustomEdge, // 自定义边
 }
 
 type WorkflowProps = {
